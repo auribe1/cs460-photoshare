@@ -9,14 +9,14 @@
 {% endif %}
 
 {% if photos %}
-<h2>Here are your photos</h2>
-    <ul>
-    {% for photo in photos %}
+  <h2>Here are your photos</h2>
+      <ul>
+      {% for photo in photos %}
 
-        <li>{{photo[2]}}<br>
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
-    {% endfor %}
-    </ul>
+          <li>{{photo[2]}}<br>
+          <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+      {% endfor %}
+      </ul>
 {% endif %}
 
 {% if message is none %}
@@ -27,6 +27,7 @@
 
 <ul>
 <li><a href='/upload'>Upload a photo</a> </li>
+<li><a href='/browsePhotos'>Browse photos from users</a> </li>
 <li><a href='/logout'>Logout</a></li>
 <li><a href='/'>Home</a></li>
 </ul>
