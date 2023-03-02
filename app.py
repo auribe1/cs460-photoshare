@@ -209,6 +209,20 @@ def getAlbumIDfromName(albumName):
 	albumID = cursor.fetchall()
 	return albumID
 
+def setUserContScore(userID, amount):
+	#amount is how much to increase by. pass in a negative amount to decrease
+	cursor = conn.cursor()
+	newScore = int(getContributionScore(userID)) + amount
+	cursor.execute("Update registeredUser set contributionScore= ('{0}') where userID = '{1}'".format(newScore, userID))
+	conn.commit()
+	
+def getContributionScore(userID):
+	cursor = conn.cursor()
+	cursor.execute("Select contributionScore from registeredUser where userID = '{0}'".format(userID))
+	contributionScore = cursor.fetchone()[0]
+	return contributionScore
+	
+
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
@@ -224,13 +238,14 @@ def upload_file():
 		if (getAlbumsForUser(uid)):
 			imgfile = request.files['photo']
 			caption = request.form.get('caption')
-			photo_data =imgfile.read()
-			
+			photo_data =imgfile.read()	
 			selectedAlbum = request.form.get('albumName')
 			selectedAlbumID = getAlbumIDfromName(selectedAlbum)
 			cursor.execute('''INSERT INTO photo_in_album (photoBinary, userID, caption, albumID) VALUES (%s, %s, %s, %s )''', (photo_data, uid, caption, selectedAlbumID))
+			setUserContScore(uid, 1)
 			conn.commit()
-			return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+			
+			return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded! to album: ' + selectedAlbum, photos=getUsersPhotos(uid), base64=base64)
 		else:
 			#albumName = request.form.get('albumName')
 			#cursor.execute('''INSERT INTO albums (albumName, ownerID) VALUES (%s, %s)''', (albumName, uid))
@@ -238,6 +253,7 @@ def upload_file():
 			return render_template('upload.html', album=False)
 	else:
 		if(getAlbumsForUser(uid)):
+
 			return render_template('upload.html', album=True)
 		else:
 			#albumName = request.form.get('albumName')
