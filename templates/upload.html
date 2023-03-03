@@ -11,6 +11,30 @@
                 <input type="file" name="photo" required='true' /><br />
                 <label for="caption">Please caption:</label>
                 <input type="text" name="caption" required='true' /><br />
+                <label for="tags">Enter tags (separated by commas):</label>
+                <input type="tagTitle" id="tags" name="tags">
                 <input type="submit" value="Upload" />
+                
+            </form>
+
+            <a href="/all_taggedphotos"><button>All tags</button></a>
+            <a href="/top_taggedphotos"><button>Top tags</button></a>
+            
+            {% if tags %}
+         
+                <h3>Tags:</h3>
+                <ul>
+                    {% for tag in tags %}
+                        <li><a href="/display_uphotostag/{{ tag }}">{{ tag }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %} <br>
+
+
+
+            <form method="post" action="{{ url_for('search_tag') }}">
+                <label for="tagsearch">search by tag</label>
+                <input type="tagTitle" name = "tagsearch" id="tagsearch"/><br />
+                <input type="submit" />
             </form>
     </body>

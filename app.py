@@ -23,7 +23,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'put your pass here.'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'GUwsn1108!'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -44,6 +44,52 @@ def getUserList():
 
 class User(flask_login.UserMixin):
 	pass
+
+def friend(userID, friendID):
+	print(userID, friendID)
+	if not is_friends(userID, friendID):
+		#insert the user_id into the table
+		cursor = conn.cursor()
+		print(f"{userID} and {friendID} is what im trying to insert")
+		print(type(userID), type(friendID))
+		cursor.execute("INSERT INTO friendship (userID, friendID) VALUES ('{0}','{1}')".format(userID, friendID))
+		conn.commit()
+		print('it should have inserted')
+
+
+def is_friends(userID,friendID):
+	# print(userID, friendID)
+	cursor = mysql.connect().cursor()
+	print(userID, friendID, type(userID))
+	cursor.execute("SELECT * FROM friendship WHERE ((userID = '{0}' AND friendID = '{1}') AND (userID = '{1}' AND friendID = '{0}')) AND (userID IS NOT NULL AND friendID IS NOT NULL)".format(userID, friendID))
+	return_value = cursor.fetchall()
+	print(return_value)
+	if return_value:
+		print("true")
+		return True
+	else:
+		print("false")
+		return False
+
+def get_friends(userID):
+    cursor = mysql.connect().cursor()
+    cursor.execute("SELECT friendID FROM friendship WHERE userID = '{0}'".format(userID))
+    results = cursor.fetchall()
+    friendIDs = [result[0] for result in results]
+    print(friendIDs)
+    return friendIDs
+
+def get_friend_info(friendIDs):
+    cursor = mysql.connect().cursor()
+    friend_info = []
+    for friendID in friendIDs:
+        cursor.execute("SELECT * FROM registeredUser WHERE userID = '{0}'".format(friendID))
+        result = cursor.fetchone()
+        friend_info.append(result)
+    return friend_info
+
+
+
 
 @login_manager.user_loader
 def user_loader(email):
@@ -104,6 +150,76 @@ def login():
 	return "<a href='/login'>Try again</a>\
 			</br><a href='/register'>or make an account</a>"
 
+	
+
+@app.route('/add_friend', methods=['GET','POST'])
+@flask_login.login_required
+def add_friend():
+	if request.method == 'POST':
+		userID = request.form.get('userID')
+		friendID = request.form.get('friendID')
+		if userID != None or friendID != None:
+			userID = int(userID)
+			friendID = int(friendID)
+		print(f"the userID is {userID}")
+		print(f"the friendID is {friendID}")
+		print(type(userID))
+
+		print("point reached")
+		if not is_friends(userID, friendID):
+			print("NOT FRIEND YET")
+			friend(userID, friendID)
+			print("wow they should be friends")
+
+	return render_template('add_friend.html')
+
+
+@app.route('/find_friend', methods=['GET', 'POST'])
+@flask_login.login_required
+def find_friend():
+	if request.method == 'POST':
+		friend_email = request.form.get('email')
+		friendID = getUserIdFromEmail(friend_email)
+		if friendID == -1:
+			return render_template('find_friend.html', friendID = -1)
+		return render_template('find_friend.html', friendID = friendID)
+	return render_template('find_friend.html')
+
+
+@app.route('/friends', methods=['GET','POST'])
+@flask_login.login_required
+def show_friends():
+	if request.method == 'GET':
+		userID = getUserIdFromEmail(flask_login.current_user.id)
+		print(userID)
+		friendIDs = get_friends(userID)
+		friend_info = get_friend_info(friendIDs)
+		return render_template('friends.html', friend_info = friend_info)
+	
+	return render_template('friends.html')
+
+
+
+@app.route('/display_uphotostag/<tagTitle>', methods=['GET', 'POST'])
+@flask_login.login_required
+def display_uphotostag(tagTitle):
+	if request.method == 'GET':
+		userID = getUserIdFromEmail(flask_login.current_user.id)
+		
+		photos = get_user_photos_by_tag(userID, tagTitle)
+		return render_template('mytagphotos.html', photos=photos, base64=base64, tag=tagTitle)
+
+@app.route('/display_allphotostag/<tagTitle>', methods=['GET', 'POST'])
+@flask_login.login_required
+def display_allphotostag(tagTitle):
+	if request.method == 'GET':
+		userID = getUserIdFromEmail(flask_login.current_user.id)
+		
+		photos = get_all_photos_by_tag(tagTitle)
+		return render_template('mytagphotos.html', photos=photos, base64=base64, tag=tagTitle)
+
+
+
 @app.route('/logout')
 def logout():
 	flask_login.logout_user()
@@ -146,14 +262,28 @@ def register_user():
 		print("couldn't find all tokens")
 		return flask.redirect(flask.url_for('register'))
 
+def get_user_photos_by_tag(userID, tagTitle):
+	
+	cursor = conn.cursor()
+	cursor.execute("SELECT pi.photobinary, pi.pID, pi.caption, t.tagTitle FROM photo_in_album pi JOIN hasTag ht ON ht.pID = pi.pID JOIN tags t ON ht.tagTitle = t.tagTitle WHERE pi.userID = '{0}' AND t.tagTitle = '{1}'".format(userID, tagTitle))
+	return cursor.fetchall()
+
+def get_all_photos_by_tag(tagTitle):
+	
+	cursor = conn.cursor()
+	cursor.execute("SELECT pi.photobinary, pi.pID, pi.caption, t.tagTitle FROM photo_in_album pi JOIN hasTag ht ON ht.pID = pi.pID JOIN tags t ON ht.tagTitle = t.tagTitle WHERE t.tagTitle = '{0}'".format(tagTitle))
+	return cursor.fetchall()
+
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT imgdata, picture_id, caption FROM photo_in_album WHERE userID = '{0}'".format(uid))
+	cursor.execute("SELECT photobinary, pID, caption FROM photo_in_album WHERE userID = '{0}'".format(uid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
-	cursor.execute("SELECT userID FROM registeredUser WHERE email = '{0}'".format(email))
+	call =cursor.execute("SELECT userID FROM registeredUser WHERE email = '{0}'".format(email))
+	if call == 0:
+		return -1
 	return cursor.fetchone()[0]
 
 def isEmailUnique(email):
@@ -184,15 +314,78 @@ def upload_file():
 		uid = getUserIdFromEmail(flask_login.current_user.id)
 		imgfile = request.files['photo']
 		caption = request.form.get('caption')
+		tags = request.form.get('tags').split(',')
+		
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
 		cursor.execute('''INSERT INTO photo_in_album (photoBinary, userID, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
+		photo_id = cursor.lastrowid
+		for tag in tags:
+			tag = tag.upper()
+			cursor.execute('''INSERT IGNORE INTO tags (tagTitle) VALUES (%s)''', (tag))
+			cursor.execute('''INSERT INTO hasTag (pID, tagTitle) VALUES (%s, %s)''', (photo_id, tag))
+		
 		conn.commit()
+		
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
 	else:
-		return render_template('upload.html')
+		# Query the database for tags associated with the user's photos
+		uid = getUserIdFromEmail(flask_login.current_user.id)
+		cursor = conn.cursor()
+		cursor.execute("SELECT DISTINCT t.tagTitle FROM tags t JOIN hasTag ht ON t.tagTitle=ht.tagTitle JOIN photo_in_album p ON ht.pID=p.pID WHERE p.userID=%s", (uid,))
+		tags = [row[0] for row in cursor.fetchall()]
+		for tag in tags:
+			tag = tag.upper()
+
+		# # Query the database for all existing tags
+		# cursor = conn.cursor() THIS IS FOR
+		# cursor.execute("SELECT tagTitle FROM tags")
+		# tags = [row[0] for row in cursor.fetchall()]
+
+		# return render_template('upload.html', tags=tags)
+		return render_template('upload.html', tags=tags)
 #end photo uploading code
+
+@app.route('/all_taggedphotos', methods=['GET','POST'])
+def all_taggedphotos():
+		cursor = conn.cursor() 
+		cursor.execute("SELECT tagTitle FROM tags")
+		tags = [row[0] for row in cursor.fetchall()]
+		return render_template('all_taggedphotos.html', tags=tags)
+
+@app.route('/top_taggedphotos', methods=['GET','POST'])
+def top_taggedphotos():
+		cursor = conn.cursor() 
+		cursor.execute("""
+        SELECT tagTitle, COUNT(*) as tag_count
+        FROM hastag
+        GROUP BY tagTitle
+        ORDER BY tag_count DESC
+        LIMIT 3
+    """)
+		tags = [row[0] for row in cursor.fetchall()]
+		print(type(tags))
+		return render_template('top_taggedphotos.html', tags=tags)
+
+@app.route('/searchtag', methods=['GET', 'POST'])
+def search_tag():
+	if request.method == 'POST':
+		tags = request.form.get('tagsearch')
+		if tags is not None and ' ' in tags:
+			tags = tags.split(' ')
+			for tag in tags:
+				tag = tag.upper()
+		else:
+			tags = tags.upper()
+
+	if type(tags) == str:
+		return render_template('searchtags_string.html', tags = tags)
+	else:
+		return render_template('searchtags_list.html', tags = tags)
+		
+
+
 
 
 #default page

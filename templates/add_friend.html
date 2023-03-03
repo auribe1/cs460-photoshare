@@ -1,0 +1,13 @@
+
+
+{% block content %}
+
+  <h1>Add Friend</h1>
+  <form method="POST" action="{{ url_for('add_friend') }}">
+    <label for="userID">Your User ID:</label>
+    <input type="userID" name="userID" id="userID"><br><br>
+    <label for="friendID">Friend's User ID:</label>
+    <input type="userID" name="friendID" id="friendID"><br><br>
+    <input type="submit" value="Add Friend">
+  </form>
+{% endblock %}

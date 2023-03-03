@@ -53,7 +53,7 @@ foreign key(friendID) references registeredUser(userID)
  pID int auto_increment not null,
  albumID int,
  caption text,
- photoBinary blob,
+ photoBinary longblob,
  userID int,
  likes INTEGER default 0,
  primary key(pID),

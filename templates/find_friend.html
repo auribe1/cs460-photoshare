@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Find a Friend</title>
+  </head>
+  <body>
+    <h1>Find a Friend</h1>
+    <form method="POST" action="{{ url_for('find_friend') }}">
+      <label for="email">Enter your friend's email address:</label><br>
+      <input type="email" id="email" name="email"><br><br>
+      <input type="submit" value="Find">
+    </form>
+    {% if friendID == -1 %}
+    <p>user not found</p>
+    <p> Go to <a href='/profile'>profile?</a></p>
+    
+    {% else %}
+    <p>Your friend's ID is: {{ friendID }}</p>
+    <p> Go to <a href='/profile'>profile?</a></p>
+    {% endif %}
+    
+  </body>
+</html>

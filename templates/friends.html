@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>List of Friends</title>
+</head>
+<body>
+	<h1>List of Friends</h1>
+	<!-- <form method="POST" action="{{ url_for('show_friends') }}">
+		<label for="userID">Enter your user ID:</label>
+		<input type="userID" name="userID" id="userID">
+		<input type="submit" value="Show Friends">
+	</form> -->
+	{% if friend_info %}
+		<ul>
+			{% for friend in friend_info %}
+				<li>{{ friend[1] }} ({{ friend[2] }})</li>
+			{% endfor %}
+      <p> Go to <a href='/profile'>profile?</a></p>
+		</ul>
+	{% else %}
+		<p>No friends found.</p>
+    
+	{% endif %}
+</body>
+</html>
+
