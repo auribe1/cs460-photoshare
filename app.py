@@ -148,6 +148,25 @@ def register_user():
 		print("couldn't find all tokens")
 		return render_template('register.html', supress=False)
 
+#end login code
+
+@app.route('/profile')
+@flask_login.login_required
+def protected():
+	return render_template('hello.html', name=getFullNameFromEmail(flask_login.current_user.id), message="Here's your profile")
+
+@app.route('/browsePhotos')
+def photoBrowsing():
+	try:
+		return render_template('photoBrowsing.html', name= getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), base64=base64)
+	except:
+		return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
+	#if(not email):
+	#	return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
+	#else:
+	#	return render_template('photoBrowsing.html', name= getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), base64=base64)
+		
+#useful methods here
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
 	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album WHERE userID = '{0}'".format(uid))
@@ -171,29 +190,28 @@ def getFullNameFromEmail(email):
 	cursor = conn.cursor()
 	cursor.execute("SELECT fullName FROM registeredUser WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
-#end login code
-
-@app.route('/profile')
-@flask_login.login_required
-def protected():
-	return render_template('hello.html', name=getFullNameFromEmail(flask_login.current_user.id), message="Here's your profile")
-
-@app.route('/browsePhotos')
-def photoBrowsing():
-	try:
-		return render_template('photoBrowsing.html', name= getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), base64=base64)
-	except:
-		return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
-	#if(not email):
-	#	return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
-	#else:
-	#	return render_template('photoBrowsing.html', name= getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), base64=base64)
-		
-	
 
 def getAllPhotos():
 	cursor = conn.cursor()
-	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album")
+	cursor.execute("SELECT photoBinary, caption, userID, albumID FROM photo_in_album")
+	photos =cursor.fetchall()
+	photos = list(photos)
+	newPhotos = list()
+	for photo in photos:
+		uid = photo[2]
+		fullName = (getFullNameFromUserID(uid),)
+		albumID = (photo[3])
+		albumName = (getAlbumNameFromID(albumID, uid),)
+		new = photo + fullName
+		new = new + albumName
+		newPhotos.append(new)
+	return newPhotos
+
+
+def getPhotosInAlbumForUser(albumName, userID):
+	cursor = conn.cursor()
+	albumID = getAlbumIDfromName(albumName, userID)
+	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album where albumID = '{0}' and userID = '{1}'".format(albumID, userID))
 	photos =cursor.fetchall()
 	return photos
 
@@ -203,10 +221,15 @@ def getAlbumsForUser(userID):
 	albums = cursor.fetchall()
 	return albums
 
-def getAlbumIDfromName(albumName):
+def getAlbumIDfromName(albumName, userID):
 	cursor = conn.cursor()
-	cursor.execute("Select albumID from albums where albumName = '{0}'".format(albumName))
+	cursor.execute("Select albumID from albums where albumName = '{0}' and ownerID = '{1}'".format(albumName, userID))
 	albumID = cursor.fetchall()
+	return albumID
+def getAlbumNameFromID(albumID, userID):
+	cursor = conn.cursor()
+	cursor.execute("Select albumName from albums where albumID = '{0}' and ownerID = '{1}'".format(albumID, userID))
+	albumID = cursor.fetchone()[0]
 	return albumID
 
 def setUserContScore(userID, amount):
@@ -222,6 +245,10 @@ def getContributionScore(userID):
 	contributionScore = cursor.fetchone()[0]
 	return contributionScore
 	
+def getFullNameFromUserID(userID):
+	cursor = conn.cursor()
+	cursor.execute("SELECT fullName FROM registeredUser WHERE userID = '{0}'".format(userID))
+	return cursor.fetchone()[0]
 
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
@@ -240,12 +267,12 @@ def upload_file():
 			caption = request.form.get('caption')
 			photo_data =imgfile.read()	
 			selectedAlbum = request.form.get('albumName')
-			selectedAlbumID = getAlbumIDfromName(selectedAlbum)
+			selectedAlbumID = getAlbumIDfromName(selectedAlbum,uid)
 			cursor.execute('''INSERT INTO photo_in_album (photoBinary, userID, caption, albumID) VALUES (%s, %s, %s, %s )''', (photo_data, uid, caption, selectedAlbumID))
 			setUserContScore(uid, 1)
 			conn.commit()
 			
-			return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded! to album: ' + selectedAlbum, photos=getUsersPhotos(uid), base64=base64)
+			return render_template('hello.html', name=getFullNameFromEmail(flask_login.current_user.id), message='Photo uploaded! to album: ' + selectedAlbum, photos=getUsersPhotos(uid), base64=base64)
 		else:
 			#albumName = request.form.get('albumName')
 			#cursor.execute('''INSERT INTO albums (albumName, ownerID) VALUES (%s, %s)''', (albumName, uid))
@@ -266,20 +293,38 @@ def upload_file():
 	#The method is GET so we return a  HTML form to upload the a photo.
 	
 #end photo uploading code
+@app.route('/albumSelection', methods=['GET', 'POST'])
+@flask_login.login_required
+def albumSelection():
+	uid = getUserIdFromEmail(flask_login.current_user_id)
+	cursor = conn.cursor()
+	if request.method == "POST":
+		if (getUsersPhotos(uid)):
+			getAlbumsForUser(uid)
 
+
+
+			
+			#display all the photos with their photoID, probably inside of the specific album they are in.
+			#have the user submit the photoID of the photo they wish to delete
+			#use that pID to delete their photo
+
+
+#TODO users still need to be able to create albums at any time, not just when they don't have any.
 @app.route('/albumCreation', methods=['GET', 'POST'])
 @flask_login.login_required
 def albumCreation():
 	if(request.method == 'GET'):
 		return render_template('albumCreation.html')
 	else:
-		print("got here")
 		ownerID = getUserIdFromEmail(flask_login.current_user.id)
 		cursor = conn.cursor()
 		albumName = request.form.get('albumName')
 		cursor.execute('''INSERT INTO albums (albumName, ownerID) VALUES (%s, %s)''', (albumName, ownerID))
 		conn.commit()
 		return render_template('hello.html', name =flask_login.current_user.id, message = "album " + albumName + " has been created!")
+
+
 
 
 #default page

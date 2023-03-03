@@ -8,8 +8,9 @@
       <ul>
       {% for photo in photos %}
 
-          <li>{{photo[2]}}<br>
+          <li>{{photo[1]}}<br>
           <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+          <h3>This photo was posted by user: {{photo[4]}} inside their {{photo[5]}} album</h3>
       {% endfor %}
       </ul>
 {% endif %}
