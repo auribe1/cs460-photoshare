@@ -1,0 +1,40 @@
+<title>Photoshare</title>
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% endif %}
+<a href='/'>Home</a>
+{% if photos %}
+  <h2>Here are some photos on Photoshare</h2>
+      <ul>
+        <form method="post" action="{{ url_for('search_comment') }}">
+            <label for="comment">search for a comment!</label>
+            <input type="comment" name = "comment" id="comment"/><br />
+            <input type="submit" />
+        </form>
+      {% for photo in photos %}
+
+      <li>{{photo[2]}}<br>
+        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+        <form action="{{ url_for('user_like') }}" method="POST">
+            <input type="hidden" name="pID" value="{{ photo[1] }}">
+            <input type="hidden" name="userID" value="{{ userID }}">
+            <button type="submit">Like</button>
+        </form>
+        <a href="{{ url_for('photo_likes', pID=photo[1]) }}">View Likes</a>
+
+
+        <form method="post" action="{{ url_for('left_comment') }}">
+            <input type="hidden" name="pID" value="{{ photo[1] }}">
+            <input type="hidden" name="userID" value="{{ userID }}">
+         
+
+            <label for="comment">enter a comment!</label>
+            <input type="comment" name = "comment" id="comment"/><br />
+            <input type="submit" />
+        </form>
+
+    
+            
+      {% endfor %}
+      </ul>
+{% endif %}

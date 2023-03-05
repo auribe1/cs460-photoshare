@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Matched Comments</title>
+</head>
+<body>
+	<h1>Matched Comments:</h1>
+	<ul>
+		{% for comment in comments %}
+			<li>{{ comment['commentID'] }}: {{ comment['comment'] }} by {{ comment['commentOwner'] }}</li>
+		{% endfor %}
+	</ul>
+</body>
+</html>

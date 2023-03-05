@@ -13,6 +13,7 @@ import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
 import flask_login
+from datetime import datetime
 
 #for image uploading
 import os, base64
@@ -219,6 +220,163 @@ def display_allphotostag(tagTitle):
 		return render_template('mytagphotos.html', photos=photos, base64=base64, tag=tagTitle)
 
 
+def getAllPhotos():
+	cursor = conn.cursor()
+	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album")
+	photos =cursor.fetchall()
+	return photos
+
+
+@app.route('/browsePhotos')
+def photoBrowsing():
+	try:
+		
+		return render_template('photoBrowsing.html', name= getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), base64=base64)
+	except:
+		
+		return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
+
+@app.route('/likes_photo', methods = ['POST'])
+
+@flask_login.login_required
+def user_like():
+	if request.method == 'POST':
+		pID = request.form.get('pID')
+		userID =  getUserIdFromEmail(flask_login.current_user.id)
+		
+		userID = int(userID)
+		pID= int(pID)
+		cursor = conn.cursor()
+		cursor.execute("UPDATE photo_in_album SET likes = likes + 1 WHERE pID = %s", (pID))
+		likes = cursor.execute("SELECT likes FROM photo_in_album WHERE pID = %s", (pID))
+		
+		cursor.execute("INSERT INTO likesPhoto (userID, pID) VALUES (%s, %s)", (userID, pID))
+		conn.commit()
+		return render_template('photoBrowsing.html', name = getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), likes=likes, base64=base64)
+	return render_template('photoBrowsing.html', name = "anonymous", photos = getAllPhotos(), base64=base64)
+	
+@app.route('/likes/<int:pID>')
+@flask_login.login_required
+def photo_likes(pID):
+	cursor = conn.cursor()
+	cursor.execute("SELECT likes FROM photo_in_album WHERE pID = %s", (pID,))
+	likes = cursor.fetchone()[0]
+	cursor.execute("SELECT userID FROM likesPhoto WHERE pID = %s", (pID,))
+	cursor.execute("SELECT registeredUser.email FROM likesPhoto JOIN registeredUser ON likesPhoto.userID = registeredUser.userID WHERE likesPhoto.pID = %s", (pID,))
+	liked_emails = [row[0] for row in cursor.fetchall()]
+
+	return render_template('photo_likes.html', likes=likes, liked_users=liked_emails)
+
+@app.route('/commented', methods=['POST', 'GET'])
+def left_comment():
+	if request.method == 'POST':
+		pID = request.form.get('pID')
+		userID = request.form.get('userID')
+		
+		if userID == '':
+			if flask_login.current_user.is_authenticated:
+				userID =  getUserIdFromEmail(flask_login.current_user.id)
+			else:
+				userID = -1
+		print(userID)
+		contents = request.form.get('comment')
+		commented_by_name = None
+
+		if userID == -1:
+			
+			commented_by_name = "anonymous"
+		else:
+			commented_by_name = getFullNameFromEmail(get_email_from_userID(userID))
+			print(commented_by_name)
+
+		cursor = conn.cursor()
+		 
+		cursor.execute("INSERT INTO comments (contents, commentOwner) VALUES (%s, %s)", (contents, userID))
+
+		cursor.execute("SELECT commentID FROM comments WHERE contents = %s", (contents,))
+		result = cursor.fetchone()
+
+		commentID = result[0]
+		cursor.execute("INSERT INTO comment_under_photo (commentID, pID) VALUES (%s, %s)", (commentID ,pID) )
+
+		
+		
+		conn.commit()
+
+
+
+		cursor.execute("""
+        SELECT comments.commentID, comments.contents, comments.commentOwner, comments.commentDate
+        FROM comments
+        JOIN comment_under_photo
+        ON comments.commentID = comment_under_photo.commentID
+        WHERE comment_under_photo.pID = %s;
+        """, (pID,))
+
+		comments = cursor.fetchall()
+
+		return render_template('comment_display.html', comments = comments)
+
+	return render_template('comment_display.html')
+
+# 	@app.route('/searchtag', methods=['GET', 'POST'])
+# def search_tag():
+# 	if request.method == 'POST':
+# 		tags = request.form.get('tagsearch')
+# 		if tags is not None and ' ' in tags:
+# 			tags = tags.split(' ')
+# 			for tag in tags:
+# 				tag = tag.upper()
+# 		else:
+# 			tags = tags.upper()
+
+# 	if type(tags) == str:
+# 		return render_template('searchtags_string.html', tags = tags)
+# 	else:
+# 		return render_template('searchtags_list.html', tags = tags)
+
+@app.route('/searchcomment', methods = ['GET', 'POST'])
+def search_comment():
+	if request.method == 'POST':
+		comment = request.form.get('comment')
+		return render_template('searchcomments.html', comment = comment )
+
+
+@app.route('/display_allcomments/<comment>', methods=['GET', 'POST'])
+@flask_login.login_required
+def display_allcomments(comment):
+	if request.method == 'GET':
+		userID = getUserIdFromEmail(flask_login.current_user.id)
+		
+		comments = get_all_comments_by_comment(comment)
+	
+		return render_template('matched_comments.html', comments = comments )
+
+def get_all_comments_by_comment(comment):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT comments.commentID, comments.contents, registeredUser.fullName 
+        FROM comments 
+        JOIN registeredUser ON comments.commentOwner = registeredUser.userID 
+        WHERE contents = '{0}'
+        UNION 
+        SELECT comments.commentID, comments.contents, comments.commentOwner 
+        FROM comments 
+        WHERE contents = '{0}' AND commentOwner = -1
+    """.format(comment))
+    results = cursor.fetchall()
+    print(results)
+    comments = []
+    for spot in results:
+        comment = {
+            'commentID': spot[0],
+            'comment': spot[1],
+            'commentOwner': spot[2] if spot[2] != '-1' else 'anonymous'
+        }
+        comments.append(comment)
+    return comments
+
+
 
 @app.route('/logout')
 def logout():
@@ -284,6 +442,16 @@ def getUserIdFromEmail(email):
 	call =cursor.execute("SELECT userID FROM registeredUser WHERE email = '{0}'".format(email))
 	if call == 0:
 		return -1
+	return cursor.fetchone()[0]
+
+def get_email_from_userID(userID):
+	curcor = conn.cursor()
+	call = cursor.execute("SELECT email FROM registeredUser where userID = '{0}'".format(userID))
+	return cursor.fetchone()[0]
+
+def getFullNameFromEmail(email):
+	cursor = conn.cursor()
+	cursor.execute("SELECT fullName FROM registeredUser WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
 
 def isEmailUnique(email):
