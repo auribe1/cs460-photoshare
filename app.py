@@ -278,7 +278,17 @@ def left_comment():
 				userID =  getUserIdFromEmail(flask_login.current_user.id)
 			else:
 				userID = -1
+		
+		cursor = conn.cursor()
+		cursor.execute("SELECT userID FROM photo_in_album WHERE pID = %s", (pID,))
+		result = cursor.fetchone()
+		ownerID = result[0]
 		print(userID)
+		print(ownerID)
+		if ownerID == userID:
+			return "You cannot comment on your own photo."
+
+
 		contents = request.form.get('comment')
 		commented_by_name = None
 
@@ -291,12 +301,13 @@ def left_comment():
 
 		cursor = conn.cursor()
 		 
-		cursor.execute("INSERT INTO comments (contents, commentOwner) VALUES (%s, %s)", (contents, userID))
+		cursor.execute("INSERT INTO comments (contents, commentOwner) VALUES (%s, %s)", (contents, commented_by_name))
 
-		cursor.execute("SELECT commentID FROM comments WHERE contents = %s", (contents,))
+		cursor.execute("SELECT commentID FROM comments WHERE contents = %s ORDER BY commentID DESC LIMIT 1", (contents,))
 		result = cursor.fetchone()
 
 		commentID = result[0]
+		print(commentID, pID)
 		cursor.execute("INSERT INTO comment_under_photo (commentID, pID) VALUES (%s, %s)", (commentID ,pID) )
 
 		
@@ -319,21 +330,7 @@ def left_comment():
 
 	return render_template('comment_display.html')
 
-# 	@app.route('/searchtag', methods=['GET', 'POST'])
-# def search_tag():
-# 	if request.method == 'POST':
-# 		tags = request.form.get('tagsearch')
-# 		if tags is not None and ' ' in tags:
-# 			tags = tags.split(' ')
-# 			for tag in tags:
-# 				tag = tag.upper()
-# 		else:
-# 			tags = tags.upper()
 
-# 	if type(tags) == str:
-# 		return render_template('searchtags_string.html', tags = tags)
-# 	else:
-# 		return render_template('searchtags_list.html', tags = tags)
 
 @app.route('/searchcomment', methods = ['GET', 'POST'])
 def search_comment():
@@ -349,32 +346,88 @@ def display_allcomments(comment):
 		userID = getUserIdFromEmail(flask_login.current_user.id)
 		
 		comments = get_all_comments_by_comment(comment)
+		print(comments)
 	
 		return render_template('matched_comments.html', comments = comments )
 
 def get_all_comments_by_comment(comment):
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT comments.commentID, comments.contents, registeredUser.fullName 
-        FROM comments 
-        JOIN registeredUser ON comments.commentOwner = registeredUser.userID 
-        WHERE contents = '{0}'
-        UNION 
-        SELECT comments.commentID, comments.contents, comments.commentOwner 
-        FROM comments 
-        WHERE contents = '{0}' AND commentOwner = -1
-    """.format(comment))
-    results = cursor.fetchall()
-    print(results)
-    comments = []
-    for spot in results:
-        comment = {
-            'commentID': spot[0],
-            'comment': spot[1],
-            'commentOwner': spot[2] if spot[2] != '-1' else 'anonymous'
-        }
-        comments.append(comment)
-    return comments
+  
+
+# 	cursor = conn.cursor()
+# 	cursor.execute("""
+# SELECT commentID, contents, fullName, count
+# FROM (
+#     SELECT comments.commentID, comments.contents, commentOwner, COUNT(*) as count
+#     FROM comments
+#     WHERE contents = '{0}'
+#     GROUP BY commentOwner
+
+#     UNION
+
+#     SELECT comments.commentID, comments.contents, -1 as commentOwner, COUNT(*) as count
+#     FROM comments 
+#     WHERE contents = '{0}' AND commentOwner = -1
+#     GROUP BY commentOwner
+# ) as tempTable
+# LEFT JOIN registeredUser ON tempTable.commentOwner = registeredUser.userID 
+# ORDER BY count DESC, COALESCE(fullName, '')
+
+# """.format(comment))
+# 	results = cursor.fetchall()
+# 	print(results)
+# 	print(type(results))
+	
+# 	comments = []
+# 	for spot in results:
+# 		comment = {
+# 			'commentID': spot[0],
+# 			'comment': spot[1],
+# 			'commentOwner': spot[2] if spot[2] != '-1' else 'anonymous',
+# 			'count': spot[3]
+# 		}
+# 		comments.append(comment)
+		
+# 	return sorted(comments, key=lambda x: x['count'], reverse=True)
+	# cursor = conn.cursor()
+	# cursor.execute("""
+	# 	SELECT comments.commentID, comments.contents, registeredUser.fullName
+	# 	FROM comments
+	# 	LEFT JOIN registeredUser ON comments.commentOwner = registeredUser.userID
+	# 	WHERE comments.contents = %s
+	# """, (comment,))
+
+	# result = cursor.fetchall()
+	# print(result)
+	# count_dict = {}
+	
+
+	# for row in result:
+	# 	comment_id = row[2]
+	# 	print(f"comment id is {comment_id}")
+	# 	if comment_id in count_dict:
+	# 		count_dict[comment_id] += 1
+	# 	else:
+	# 		count_dict[comment_id] = 1
+
+	# print(count_dict)
+
+	# result = sorted(result, key=lambda row: count_dict.get(row[0], 0), reverse=True)
+	
+
+	# return render_template('comment_display.html', comments=result)
+	
+
+	cursor = conn.cursor()
+
+	cursor.execute("""
+		SELECT commentOwner,COUNT(commentOwner) AS ccount FROM comments WHERE contents= %s GROUP BY commentOwner ORDER BY ccount DESC
+	""", (comment,))
+
+	comments = cursor.fetchall()
+	
+
+	return comments
+
 
 
 

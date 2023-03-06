@@ -11,6 +11,7 @@
             <input type="comment" name = "comment" id="comment"/><br />
             <input type="submit" />
         </form>
+        
       {% for photo in photos %}
 
       <li>{{photo[2]}}<br>
@@ -36,5 +37,6 @@
     
             
       {% endfor %}
+
       </ul>
 {% endif %}

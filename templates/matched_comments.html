@@ -7,7 +7,7 @@
 	<h1>Matched Comments:</h1>
 	<ul>
 		{% for comment in comments %}
-			<li>{{ comment['commentID'] }}: {{ comment['comment'] }} by {{ comment['commentOwner'] }}</li>
+			<li>Owner: {{ comment[0] }} - Comment Count: {{ comment[1] }}</li>
 		{% endfor %}
 	</ul>
 </body>
