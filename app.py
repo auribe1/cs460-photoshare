@@ -92,6 +92,7 @@ def get_friend_info(friendIDs):
 
 
 
+
 @login_manager.user_loader
 def user_loader(email):
 	users = getUserList()
@@ -198,6 +199,36 @@ def show_friends():
 		return render_template('friends.html', friend_info = friend_info)
 	
 	return render_template('friends.html')
+
+@app.route('/friend_recommendations', methods = ['GET', 'POST'])
+@flask_login.login_required
+def friend_recommendations():
+	userID = getUserIdFromEmail(flask_login.current_user.id)
+	friends = get_friends(userID)
+	print(f"friends {friends}")
+	friends_of_friends = []
+	for friend in friends:
+		friends_of_friends.append(get_friends(friend))
+	print(f"friend of friends {friends_of_friends}")
+	all_friends_of_friends = [friend for friends in friends_of_friends for friend in friends]
+
+	print(f"all friend of friends {all_friends_of_friends}")
+	friend_count = {}
+	for fid in all_friends_of_friends:
+		if fid not in friends and fid != userID:
+			if fid in friend_count:
+				friend_count[fid] += 1
+			else:
+				friend_count[fid] = 1
+	
+
+	friend_recommendations = sorted(friend_count.items(), key=lambda x: x[1], reverse=True)
+	print(f"friend_recommendations {friend_recommendations}")
+	print(type(friend_recommendations))
+
+	return render_template('friend_recommendations.html', friend_recommendations = friend_recommendations)
+
+
 
 
 
@@ -351,71 +382,6 @@ def display_allcomments(comment):
 		return render_template('matched_comments.html', comments = comments )
 
 def get_all_comments_by_comment(comment):
-  
-
-# 	cursor = conn.cursor()
-# 	cursor.execute("""
-# SELECT commentID, contents, fullName, count
-# FROM (
-#     SELECT comments.commentID, comments.contents, commentOwner, COUNT(*) as count
-#     FROM comments
-#     WHERE contents = '{0}'
-#     GROUP BY commentOwner
-
-#     UNION
-
-#     SELECT comments.commentID, comments.contents, -1 as commentOwner, COUNT(*) as count
-#     FROM comments 
-#     WHERE contents = '{0}' AND commentOwner = -1
-#     GROUP BY commentOwner
-# ) as tempTable
-# LEFT JOIN registeredUser ON tempTable.commentOwner = registeredUser.userID 
-# ORDER BY count DESC, COALESCE(fullName, '')
-
-# """.format(comment))
-# 	results = cursor.fetchall()
-# 	print(results)
-# 	print(type(results))
-	
-# 	comments = []
-# 	for spot in results:
-# 		comment = {
-# 			'commentID': spot[0],
-# 			'comment': spot[1],
-# 			'commentOwner': spot[2] if spot[2] != '-1' else 'anonymous',
-# 			'count': spot[3]
-# 		}
-# 		comments.append(comment)
-		
-# 	return sorted(comments, key=lambda x: x['count'], reverse=True)
-	# cursor = conn.cursor()
-	# cursor.execute("""
-	# 	SELECT comments.commentID, comments.contents, registeredUser.fullName
-	# 	FROM comments
-	# 	LEFT JOIN registeredUser ON comments.commentOwner = registeredUser.userID
-	# 	WHERE comments.contents = %s
-	# """, (comment,))
-
-	# result = cursor.fetchall()
-	# print(result)
-	# count_dict = {}
-	
-
-	# for row in result:
-	# 	comment_id = row[2]
-	# 	print(f"comment id is {comment_id}")
-	# 	if comment_id in count_dict:
-	# 		count_dict[comment_id] += 1
-	# 	else:
-	# 		count_dict[comment_id] = 1
-
-	# print(count_dict)
-
-	# result = sorted(result, key=lambda row: count_dict.get(row[0], 0), reverse=True)
-	
-
-	# return render_template('comment_display.html', comments=result)
-	
 
 	cursor = conn.cursor()
 

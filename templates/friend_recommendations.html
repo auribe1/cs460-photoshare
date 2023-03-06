@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Friend Recommendations</title>
+</head>
+<body>
+	<h1>Friend Recommendations:</h1>
+	<ul>
+		{% for friend in friend_recommendations %}
+            <li>appeared {{ friend[1] }} times in your friends of friends (id: {{ friend[0] }})</li>
+		{% endfor %}
+	</ul>
+</body>
+</html>
