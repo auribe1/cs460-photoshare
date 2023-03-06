@@ -46,6 +46,7 @@ def getUserList():
 class User(flask_login.UserMixin):
 	pass
 
+# I ADDED THIS
 def friend(userID, friendID):
 	print(userID, friendID)
 	if not is_friends(userID, friendID):
@@ -57,7 +58,7 @@ def friend(userID, friendID):
 		conn.commit()
 		print('it should have inserted')
 
-
+# I ADDED THIS
 def is_friends(userID,friendID):
 	# print(userID, friendID)
 	cursor = mysql.connect().cursor()
@@ -71,7 +72,7 @@ def is_friends(userID,friendID):
 	else:
 		print("false")
 		return False
-
+# I ADDED THIS
 def get_friends(userID):
     cursor = mysql.connect().cursor()
     cursor.execute("SELECT friendID FROM friendship WHERE userID = '{0}'".format(userID))
@@ -80,6 +81,7 @@ def get_friends(userID):
     print(friendIDs)
     return friendIDs
 
+# I ADDED THIS
 def get_friend_info(friendIDs):
     cursor = mysql.connect().cursor()
     friend_info = []
@@ -153,7 +155,7 @@ def login():
 			</br><a href='/register'>or make an account</a>"
 
 	
-
+# I ADDED THIS
 @app.route('/add_friend', methods=['GET','POST'])
 @flask_login.login_required
 def add_friend():
@@ -175,7 +177,7 @@ def add_friend():
 
 	return render_template('add_friend.html')
 
-
+# I ADDED THIS
 @app.route('/find_friend', methods=['GET', 'POST'])
 @flask_login.login_required
 def find_friend():
@@ -187,7 +189,7 @@ def find_friend():
 		return render_template('find_friend.html', friendID = friendID)
 	return render_template('find_friend.html')
 
-
+# I ADDED THIS
 @app.route('/friends', methods=['GET','POST'])
 @flask_login.login_required
 def show_friends():
@@ -200,6 +202,7 @@ def show_friends():
 	
 	return render_template('friends.html')
 
+# I ADDED THIS
 @app.route('/friend_recommendations', methods = ['GET', 'POST'])
 @flask_login.login_required
 def friend_recommendations():
@@ -231,7 +234,7 @@ def friend_recommendations():
 
 
 
-
+# I ADDED THIS
 @app.route('/display_uphotostag/<tagTitle>', methods=['GET', 'POST'])
 @flask_login.login_required
 def display_uphotostag(tagTitle):
@@ -241,6 +244,7 @@ def display_uphotostag(tagTitle):
 		photos = get_user_photos_by_tag(userID, tagTitle)
 		return render_template('mytagphotos.html', photos=photos, base64=base64, tag=tagTitle)
 
+# I ADDED THIS
 @app.route('/display_allphotostag/<tagTitle>', methods=['GET', 'POST'])
 @flask_login.login_required
 def display_allphotostag(tagTitle):
@@ -250,14 +254,14 @@ def display_allphotostag(tagTitle):
 		photos = get_all_photos_by_tag(tagTitle)
 		return render_template('mytagphotos.html', photos=photos, base64=base64, tag=tagTitle)
 
-
+# I ADDED THIS
 def getAllPhotos():
 	cursor = conn.cursor()
 	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album")
 	photos =cursor.fetchall()
 	return photos
 
-
+# I ADDED THIS
 @app.route('/browsePhotos')
 def photoBrowsing():
 	try:
@@ -267,6 +271,7 @@ def photoBrowsing():
 		
 		return render_template('photoBrowsing.html', name= "anonymous", photos = getAllPhotos(), base64=base64)
 
+# I ADDED THIS
 @app.route('/likes_photo', methods = ['POST'])
 
 @flask_login.login_required
@@ -286,6 +291,7 @@ def user_like():
 		return render_template('photoBrowsing.html', name = getFullNameFromEmail(flask_login.current_user.id), photos = getAllPhotos(), likes=likes, base64=base64)
 	return render_template('photoBrowsing.html', name = "anonymous", photos = getAllPhotos(), base64=base64)
 	
+# I ADDED THIS
 @app.route('/likes/<int:pID>')
 @flask_login.login_required
 def photo_likes(pID):
@@ -298,6 +304,7 @@ def photo_likes(pID):
 
 	return render_template('photo_likes.html', likes=likes, liked_users=liked_emails)
 
+# I ADDED THIS
 @app.route('/commented', methods=['POST', 'GET'])
 def left_comment():
 	if request.method == 'POST':
@@ -362,14 +369,14 @@ def left_comment():
 	return render_template('comment_display.html')
 
 
-
+# I ADDED THIS
 @app.route('/searchcomment', methods = ['GET', 'POST'])
 def search_comment():
 	if request.method == 'POST':
 		comment = request.form.get('comment')
 		return render_template('searchcomments.html', comment = comment )
 
-
+# I ADDED THIS
 @app.route('/display_allcomments/<comment>', methods=['GET', 'POST'])
 @flask_login.login_required
 def display_allcomments(comment):
@@ -381,6 +388,7 @@ def display_allcomments(comment):
 	
 		return render_template('matched_comments.html', comments = comments )
 
+# I ADDED THIS
 def get_all_comments_by_comment(comment):
 
 	cursor = conn.cursor()
@@ -439,23 +447,27 @@ def register_user():
 		print("couldn't find all tokens")
 		return flask.redirect(flask.url_for('register'))
 
+# I ADDED THIS
 def get_user_photos_by_tag(userID, tagTitle):
 	
 	cursor = conn.cursor()
 	cursor.execute("SELECT pi.photobinary, pi.pID, pi.caption, t.tagTitle FROM photo_in_album pi JOIN hasTag ht ON ht.pID = pi.pID JOIN tags t ON ht.tagTitle = t.tagTitle WHERE pi.userID = '{0}' AND t.tagTitle = '{1}'".format(userID, tagTitle))
 	return cursor.fetchall()
 
+# I ADDED THIS
 def get_all_photos_by_tag(tagTitle):
 	
 	cursor = conn.cursor()
 	cursor.execute("SELECT pi.photobinary, pi.pID, pi.caption, t.tagTitle FROM photo_in_album pi JOIN hasTag ht ON ht.pID = pi.pID JOIN tags t ON ht.tagTitle = t.tagTitle WHERE t.tagTitle = '{0}'".format(tagTitle))
 	return cursor.fetchall()
 
+# I ADDED THIS
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
 	cursor.execute("SELECT photobinary, pID, caption FROM photo_in_album WHERE userID = '{0}'".format(uid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
+# I ADDED THIS
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
 	call =cursor.execute("SELECT userID FROM registeredUser WHERE email = '{0}'".format(email))
@@ -463,16 +475,19 @@ def getUserIdFromEmail(email):
 		return -1
 	return cursor.fetchone()[0]
 
+# I ADDED THIS
 def get_email_from_userID(userID):
 	curcor = conn.cursor()
 	call = cursor.execute("SELECT email FROM registeredUser where userID = '{0}'".format(userID))
 	return cursor.fetchone()[0]
 
+# THIS IS YOURS I THINK
 def getFullNameFromEmail(email):
 	cursor = conn.cursor()
 	cursor.execute("SELECT fullName FROM registeredUser WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
 
+# YOURS I THNK
 def isEmailUnique(email):
 	#use this to check if a email has already been registered
 	cursor = conn.cursor()
@@ -507,6 +522,7 @@ def upload_file():
 		cursor = conn.cursor()
 		cursor.execute('''INSERT INTO photo_in_album (photoBinary, userID, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
 		photo_id = cursor.lastrowid
+		# I ADDED THIS PART
 		for tag in tags:
 			tag = tag.upper()
 			cursor.execute('''INSERT IGNORE INTO tags (tagTitle) VALUES (%s)''', (tag))
@@ -515,9 +531,10 @@ def upload_file():
 		conn.commit()
 		
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
-	#The method is GET so we return a  HTML form to upload the a photo.
+	
+	# I ADDED THIS ELSE
 	else:
-		# Query the database for tags associated with the user's photos
+		
 		uid = getUserIdFromEmail(flask_login.current_user.id)
 		cursor = conn.cursor()
 		cursor.execute("SELECT DISTINCT t.tagTitle FROM tags t JOIN hasTag ht ON t.tagTitle=ht.tagTitle JOIN photo_in_album p ON ht.pID=p.pID WHERE p.userID=%s", (uid,))
@@ -525,15 +542,10 @@ def upload_file():
 		for tag in tags:
 			tag = tag.upper()
 
-		# # Query the database for all existing tags
-		# cursor = conn.cursor() THIS IS FOR
-		# cursor.execute("SELECT tagTitle FROM tags")
-		# tags = [row[0] for row in cursor.fetchall()]
-
-		# return render_template('upload.html', tags=tags)
 		return render_template('upload.html', tags=tags)
 #end photo uploading code
 
+# I ADDED THIS
 @app.route('/all_taggedphotos', methods=['GET','POST'])
 def all_taggedphotos():
 		cursor = conn.cursor() 
@@ -541,6 +553,7 @@ def all_taggedphotos():
 		tags = [row[0] for row in cursor.fetchall()]
 		return render_template('all_taggedphotos.html', tags=tags)
 
+# I ADDED THIS
 @app.route('/top_taggedphotos', methods=['GET','POST'])
 def top_taggedphotos():
 		cursor = conn.cursor() 
@@ -555,6 +568,7 @@ def top_taggedphotos():
 		print(type(tags))
 		return render_template('top_taggedphotos.html', tags=tags)
 
+# I ADDED THIS
 @app.route('/searchtag', methods=['GET', 'POST'])
 def search_tag():
 	if request.method == 'POST':
