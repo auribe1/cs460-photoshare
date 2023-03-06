@@ -21,8 +21,6 @@ contributionScore int default 0,
 primary key(userID)
 );
 
-
-
 create table albums(
 albumName char(20),
 DOC datetime default current_timestamp,
@@ -30,14 +28,6 @@ albumID int not null auto_increment,
 ownerID int,
 primary key (albumID),
 foreign key (ownerID) references registeredUser(userID)
-);
-
-create table album_belongs_to(
-userID int,
-albumID int,
-primary key(userID, albumID),
-foreign key (userID) references registeredUser(userID),
-foreign key (albumID) references albums(albumID)
 );
 
 create table friendship(
@@ -53,7 +43,7 @@ foreign key(friendID) references registeredUser(userID)
  pID int auto_increment not null,
  albumID int,
  caption text,
- photoBinary blob,
+ photoBinary longblob,
  userID int,
  likes INTEGER default 0,
  primary key(pID),

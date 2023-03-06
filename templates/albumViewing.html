@@ -1,0 +1,20 @@
+<title>Photoshare</title>
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% endif %}
+
+{% if photos %}
+  <h2>Here are the photos in your album: {{albumName}} </h2>
+      <ul>
+      {% for photo in photos %}
+
+          <li>{{photo[3]}}<br>
+          <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+      {% endfor %}
+      </ul>
+{% else %}
+    <h2>Your album is empty!</h2>
+     <li><a href='/upload'>Upload photos!</a></li>
+{% endif %}
+
+<a href='/'>Home</a>

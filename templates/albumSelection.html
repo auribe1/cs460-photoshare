@@ -1,0 +1,32 @@
+<title>Photoshare</title>
+<h1>Hello {{ name }}! Here are your albums:</h1>
+
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %}
+
+{% if albums %}
+<div id="content">
+    <form id="albumForm" method="post" enctype="multipart/form-data" action="/albumSelection">
+        <label for="action">What do you want to do with this album?</label>
+        <p>Options: Upload Photos, Delete Photos, View Album, Delete Album, Create Album</p>
+        <input type="text" name = "action" id="action"/><br />
+        <input type="submit" />
+    </form>
+
+      <label for="album">Pick an album:</label>
+        <select id="album" name="albumList" form="albumForm">
+            {% for album in albums %}
+             <option> {{album[1]}}</option>
+            {% endfor %}
+        </select>
+
+</div>
+{% else %}
+    <h2>You need to create an album first!</h2>
+    <li><a href='/albumCreation'>Create an Album</a> </li>
+
+{% endif %}
+
+
+<a href='/'>Home</a>

@@ -213,18 +213,18 @@ def getPhotosInAlbumForUser(albumName, userID):
 	albumID = getAlbumIDfromName(albumName, userID)
 	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album where albumID = '{0}' and userID = '{1}'".format(albumID, userID))
 	photos =cursor.fetchall()
-	return photos
+	return list(photos)
 
 def getAlbumsForUser(userID):
 	cursor = conn.cursor()
-	cursor.execute("Select albumID from albums where ownerID = '{0}'".format(userID))
+	cursor.execute("Select albumID, albumName from albums where ownerID = '{0}'".format(userID))
 	albums = cursor.fetchall()
 	return albums
 
 def getAlbumIDfromName(albumName, userID):
 	cursor = conn.cursor()
 	cursor.execute("Select albumID from albums where albumName = '{0}' and ownerID = '{1}'".format(albumName, userID))
-	albumID = cursor.fetchall()
+	albumID = cursor.fetchone()[0]
 	return albumID
 def getAlbumNameFromID(albumID, userID):
 	cursor = conn.cursor()
@@ -238,6 +238,12 @@ def setUserContScore(userID, amount):
 	newScore = int(getContributionScore(userID)) + amount
 	cursor.execute("Update registeredUser set contributionScore= ('{0}') where userID = '{1}'".format(newScore, userID))
 	conn.commit()
+
+def getNumPhotosInAlbum(userID, albumID):
+	cursor = conn.cursor()
+	cursor.execute("Select count(*) from albums where albumID = '{0}' and ownerID = '{1}'".format(albumID, userID))
+	numPhotos = cursor.fetchone()[0]
+	return numPhotos
 	
 def getContributionScore(userID):
 	cursor = conn.cursor()
@@ -292,25 +298,73 @@ def upload_file():
 			#user needs to make an album first
 	#The method is GET so we return a  HTML form to upload the a photo.
 	
+@app.route('/photoDeletion', methods=['GET','POST'])
+@flask_login.login_required
+def photoDeletion():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	fullName = getFullNameFromUserID(uid)
+	if request.method == 'GET':
+		photos = getUsersPhotos(uid)
+		return render_template('photoDeletion.html', name = fullName, photos = photos,base64=base64)
+	else:
+		try:
+			pID = request.form.get('pID')
+		except:
+			return render_template('hello.html', name = fullName, message = 'Something went wrong')
+		cursor = conn.cursor()
+			#this assumes that each user only makes one album with a certain name
+		cursor.execute("Delete from photo_in_album where pID = '{0}' and userID = '{1}' ".format(pID, uid))
+		setUserContScore(uid, -1)
+		conn.commit()
+		return render_template('hello.html', name = fullName, message = 'photo successfully deleted')
+
 #end photo uploading code
 @app.route('/albumSelection', methods=['GET', 'POST'])
 @flask_login.login_required
 def albumSelection():
-	uid = getUserIdFromEmail(flask_login.current_user_id)
-	cursor = conn.cursor()
-	if request.method == "POST":
-		if (getUsersPhotos(uid)):
-			getAlbumsForUser(uid)
-
-
-
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	fullName = getFullNameFromUserID(uid)
+	if request.method == 'GET':
+		
+		albums = getAlbumsForUser(uid)
+		
+		if (albums):
+			return render_template('albumSelection.html', albums = albums, name = fullName)
+		else:
+			return render_template('albumSelection.html', albums = False, name = fullName)
+	else:
+		action = request.form.get('action')
+		albumName = request.form.get('albumList')
+		print(albumName)
+		print(action)
+		print(uid)			
+		if(action == 'Upload Photos'):
+			return render_template('upload.html', album = True)
+		elif(action == 'Delete Photos'):
+			return render_template('photoDeletion.html', photos = getUsersPhotos(uid), name = fullName, base64=base64)
+		elif(action == 'Delete Album'):
+			albumID = getAlbumIDfromName(albumName, uid)
+			numPhotos = -1 * int(getNumPhotosInAlbum(uid, albumID))
+			cursor = conn.cursor()
+			#this assumes that each user only makes one album with a certain name
+			cursor.execute("Delete from albums where albumName = '{0}' and ownerID = '{1}' ".format(albumName, uid))
+			conn.commit()
+			#lowers the contribution score by the number of photos deleted.
+			setUserContScore(uid, numPhotos)
 			
+			return render_template('hello.html', name = fullName, message = 'album successfully deleted!')
+		elif(action == 'View Album'):
+			return render_template('albumViewing.html', photos = getPhotosInAlbumForUser(albumName, uid), base64=base64, albumName = albumName)
+		elif(action == 'Create Album'):
+			return render_template('albumCreation.html')
+		else:
+			return render_template('hello.html', message = "something failed")
+
 			#display all the photos with their photoID, probably inside of the specific album they are in.
 			#have the user submit the photoID of the photo they wish to delete
 			#use that pID to delete their photo
 
 
-#TODO users still need to be able to create albums at any time, not just when they don't have any.
 @app.route('/albumCreation', methods=['GET', 'POST'])
 @flask_login.login_required
 def albumCreation():
