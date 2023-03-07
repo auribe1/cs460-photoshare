@@ -5,6 +5,7 @@
 </head>
 <body>
 	<h1>Friend Recommendations:</h1>
+	<a href='/'>Home</a>
 	<ul>
 		{% for friend in friend_recommendations %}
             <li>appeared {{ friend[1] }} times in your friends of friends (id: {{ friend[0] }})</li>

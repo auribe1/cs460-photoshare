@@ -331,6 +331,7 @@ def left_comment():
 
 		commentID = result[0]
 		print(commentID, pID)
+		cursor.execute("INSERT INTO userLeftComment (commentID, userID) VALUES (%s, %s) ", (commentID, userID)) 
 		cursor.execute("INSERT INTO comment_under_photo (commentID, pID) VALUES (%s, %s)", (commentID ,pID) )
 		if userID != -1:
 			setUserContScore(userID, 1)
@@ -455,6 +456,7 @@ def photoBrowsing():
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
 	cursor.execute("SELECT photoBinary, pID, caption FROM photo_in_album WHERE userID = '{0}'".format(uid))
+	return cursor.fetchall()
 # I ADDED THIS
 def get_user_photos_by_tag(userID, tagTitle):
 	
@@ -571,6 +573,11 @@ def getFullNameFromUserID(userID):
 	cursor.execute("SELECT fullName FROM registeredUser WHERE userID = '{0}'".format(userID))
 	return cursor.fetchone()[0]
 
+def getTopContributors():
+	cursor = conn.cursor()
+	cursor.execute("SELECT fullName FROM registeredUser ORDER BY contributionScore Desc limit 3")
+	return cursor.fetchall()
+
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
@@ -632,8 +639,7 @@ def photoDeletion():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	fullName = getFullNameFromUserID(uid)
 	if request.method == 'GET':
-		photos = getUsersPhotos(uid)
-		return render_template('photoDeletion.html', name = fullName, photos = photos,base64=base64)
+		return render_template('photoDeletion.html', name = fullName, photos = getUsersPhotos(uid),base64=base64)
 	else:
 		try:
 			pID = request.form.get('pID')
@@ -708,7 +714,7 @@ def albumCreation():
 		albumName = request.form.get('albumName')
 		cursor.execute('''INSERT INTO albums (albumName, ownerID) VALUES (%s, %s)''', (albumName, ownerID))
 		conn.commit()
-		return render_template('hello.html', name =flask_login.current_user.id, message = "album " + albumName + " has been created!")
+		return render_template('hello.html', name =getFullNameFromEmail(flask_login.current_user.id) , message = "album " + albumName + " has been created!")
 
 
 
@@ -753,7 +759,9 @@ def search_tag():
 		return render_template('searchtags_list.html', tags = tags)
 		
 
-
+@app.route("/topUsers", methods=['GET'])
+def topUsers():
+	return render_template('topUsers.html', users = getTopContributors())
 
 
 #default page

@@ -1,0 +1,10 @@
+<title>Photoshare</title>
+<h1>Hello! Here are the top 3 users of photoshare!</h1>
+
+{% if users %}
+    {% for user in users %}
+        <li>{{user[0]}}</li>
+    {% endfor %}
+{% endif %}
+
+<a href='/'>Home</a>
