@@ -24,7 +24,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'put your password here'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'Zulema25Bruh.'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 isLoggedIn = False
@@ -612,7 +612,7 @@ def upload_file():
 			for tag in tags:
 				tag = tag.upper()
 
-			return render_template('upload.html', tags=tags)
+			return render_template('upload.html', album=True, tags=tags)
 		else:
 			#albumName = request.form.get('albumName')
 			#cursor.execute('''INSERT INTO albums (albumName, ownerID) VALUES (%s, %s)''', (albumName, uid))
