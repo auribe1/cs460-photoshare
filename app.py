@@ -331,7 +331,6 @@ def left_comment():
 
 		commentID = result[0]
 		print(commentID, pID)
-		cursor.execute("INSERT INTO userLeftComment (commentID, userID) VALUES (%s, %s) ", (commentID, userID)) 
 		cursor.execute("INSERT INTO comment_under_photo (commentID, pID) VALUES (%s, %s)", (commentID ,pID) )
 		if userID != -1:
 			setUserContScore(userID, 1)
