@@ -321,8 +321,10 @@ def left_comment():
 			print(commented_by_name)
 
 		cursor = conn.cursor()
-		 
+		
+
 		cursor.execute("INSERT INTO comments (contents, commentOwner) VALUES (%s, %s)", (contents, commented_by_name))
+		
 
 		cursor.execute("SELECT commentID FROM comments WHERE contents = %s ORDER BY commentID DESC LIMIT 1", (contents,))
 		result = cursor.fetchone()
@@ -330,7 +332,8 @@ def left_comment():
 		commentID = result[0]
 		print(commentID, pID)
 		cursor.execute("INSERT INTO comment_under_photo (commentID, pID) VALUES (%s, %s)", (commentID ,pID) )
-
+		if userID != -1:
+			setUserContScore(userID, 1)
 		
 		
 		conn.commit()
