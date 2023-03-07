@@ -582,16 +582,16 @@ def upload_file():
 	if request.method == 'POST':
 		if (getAlbumsForUser(uid)):
 			tags = request.form.get('tags').split(',')
-			photo_id = cursor.lastrowid
 			imgfile = request.files['photo']
 			caption = request.form.get('caption')
 			photo_data =imgfile.read()	
 			selectedAlbum = request.form.get('albumName')
 			selectedAlbumID = getAlbumIDfromName(selectedAlbum,uid)
 			cursor.execute('''INSERT INTO photo_in_album (photoBinary, userID, caption, albumID) VALUES (%s, %s, %s, %s )''', (photo_data, uid, caption, selectedAlbumID))
+
 			setUserContScore(uid, 1)
 			conn.commit()
-
+			photo_id = cursor.lastrowid
 			# I ADDED THIS PART
 			for tag in tags:
 				tag = tag.upper()

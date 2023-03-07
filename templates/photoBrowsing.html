@@ -16,10 +16,10 @@
       {% for photo in photos %}
 
           <li>{{photo[2]}}<br>
-          <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+          <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}'/></li>
           <h3>This photo was posted by user: {{photo[5]}} inside their {{photo[6]}} album</h3>
           <form action="{{ url_for('user_like') }}" method="POST">
-            <input type="hidden" name="pID" value="{{ photo[1] }}">
+            <input type="hidden" name="pID" value="{{ photo[0] }}">
             <input type="hidden" name="userID" value="{{ userID }}">
             <button type="submit">Like</button>
           </form>
