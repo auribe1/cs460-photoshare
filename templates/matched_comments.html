@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Matched Comments</title>
+</head>
+<body>
+	<h1>Matched Comments:</h1>
+	<ul>
+		{% for comment in comments %}
+			<li>Owner: {{ comment[0] }} - Comment Count: {{ comment[1] }}</li>
+		{% endfor %}
+	</ul>
+</body>
+</html>

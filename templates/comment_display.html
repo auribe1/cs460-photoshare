@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Comments</title>
+</head>
+<body>
+	<h1>All Comments for this photo</h1>
+	<ul>
+
+		{% for comment in comments %}
+        <p>{{ comment[1] }} - Commented by: {{ comment[2] }}</p>
+        {% endfor %}
+		
+	</ul>
+</body>
+</html>

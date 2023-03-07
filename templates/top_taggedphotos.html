@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Look at the photos!</title>
+    </head>
+    <body>
+        <div class="title">
+            <h1>Click a tag!</h1>
+        </div>
+        {% if tags %}
+            <h3>Tags:</h3>
+            <ul>
+                {% for tag in tags %}
+                    <li><a href="/display_allphotostag/{{ tag }}">{{ tag }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </body>
+</html>

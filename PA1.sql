@@ -103,15 +103,4 @@ primary key (userID, commentID),
 foreign key (userID) references registeredUser(userID),
 foreign key (commentID) references comments(commentID)
 );
-
-delimiter $$
-CREATE TRIGGER Comment_Constraint_Trigger
-BEFORE INSERT ON Comments
-FOR EACH ROW
-BEGIN
-    IF EXISTS (SELECT * FROM comments C, registeredUser U where (U.fullName = C.commentOwner)) then
-	signal sqlstate '45000' set message_text = 'user cannot comment under own photo';
-    end if;
-end $$
-
-delimiter ;    
+  

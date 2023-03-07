@@ -1,0 +1,20 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Photo Likes</title>
+</head>
+<body>
+  <h2>Photos with tag "{{ tag }}"</h2>
+
+    {% for photo in photos %}
+      
+    <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/>
+
+        <p>{{ photo[2] }}</p>
+        <p>Tags: {{ photo[3] }}</p>
+     
+      <p> Go to <a href='/profile'>profile?</a></p>
+    {% endfor %}
+</body>
+</html>

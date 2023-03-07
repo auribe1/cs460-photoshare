@@ -15,7 +15,32 @@
                 <input type="text" name="caption" required='true' /><br />
                 <label for="albumName">Enter the album to upload this photo to:</label>
                 <input type="text" name="albumName" required='true' /><br />
+                <label for="tags">Enter tags (separated by commas):</label>
+                <input type="tagTitle" id="tags" name="tags">
                 <input type="submit" value="Upload" />
+                
+            </form>
+
+            <a href="/all_taggedphotos"><button>All tags</button></a>
+            <a href="/top_taggedphotos"><button>Top tags</button></a>
+            <a href="/youmayalsolike"><button>you may also like</button></a>
+
+            {% if tags %}
+         
+                <h3>Tags:</h3>
+                <ul>
+                    {% for tag in tags %}
+                        <li><a href="/display_uphotostag/{{ tag }}">{{ tag }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %} <br>
+
+
+
+            <form method="post" action="{{ url_for('search_tag') }}">
+                <label for="tagsearch">search by tag</label>
+                <input type="tagTitle" name = "tagsearch" id="tagsearch"/><br />
+                <input type="submit" />
             </form>
         {% else %}
             <h2>You need to create an album first!</h2>

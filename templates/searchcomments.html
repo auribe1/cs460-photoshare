@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    
+    <body>
+       
+        {% if comment %}
+        <h3>Comments:</h3>
+        <ul>
+            
+            <li><a href="/display_allcomments/{{ comment }}">{{ comment }}</a></li>
+          
+        </ul>
+            {% else %}
+                <p>No comments found</p>
+        {% endif %}
+
+    </body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Photo Likes</title>
+</head>
+<body>
+	<h1>Photo Likes</h1>
+	<p>{{ likes }} likes</p>
+	<ul>
+	{% for user in liked_users %}
+		<li>{{ user }}</li>
+	{% endfor %}
+	</ul>
+	<a href="{{ url_for('photoBrowsing') }}">Back to Photo Browsing</a>
+</body>
+</html>
