@@ -1,0 +1,24 @@
+<title>Here are some photos you might like :</title>
+
+{% for photo in photos %}
+
+    <li>{{photo[2]}}<br>
+    <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}'/></li>
+    <h3>This photo was posted by user: {{photo[5]}} inside their {{photo[6]}} album</h3>
+    <form action="{{ url_for('user_like') }}" method="POST">
+        <input type="hidden" name="pID" value="{{ photo[0] }}">
+        <input type="hidden" name="userID" value="{{ userID }}">
+        <button type="submit">Like</button>
+    </form>
+      <a href="{{ url_for('photo_likes', pID=photo[0]) }}">View Likes</a>
+
+      <form method="post" action="{{ url_for('left_comment') }}">
+        <input type="hidden" name="pID" value="{{ photo[0] }}">
+        <input type="hidden" name="userID" value="{{ userID }}">
+     
+
+        <label for="comment">enter a comment!</label>
+        <input type="comment" name = "comment" id="comment"/><br />
+        <input type="submit" />
+
+{% endfor %}

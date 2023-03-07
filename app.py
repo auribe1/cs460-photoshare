@@ -578,6 +578,16 @@ def getTopContributors():
 	cursor.execute("SELECT fullName FROM registeredUser ORDER BY contributionScore Desc limit 3")
 	return cursor.fetchall()
 
+def mostFrequentlyUsedTags(userID):
+	cursor =conn.cursor()
+	cursor.execute("Select tagTitle from photo_in_album P, hasTag T where (P.userID = '{0}' and P.pID = T.pID) group by tagTitle Order by count(tagTitle) desc limit 3 ".format(userID))
+	return cursor.fetchall()
+
+def checkIfHasTag(tagTitle, pID):
+	cursor = conn.cursor()
+	cursor.execute("select pID from hasTag where tagTitle = '{0}' and pID = '{1}'".format(tagTitle[0], pID))
+	return cursor.fetchall()
+
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
@@ -653,13 +663,13 @@ def photoDeletion():
 		return render_template('hello.html', name = fullName, message = 'photo successfully deleted')
 
 		
-		
 	
 	
 #end photo uploading code
 @app.route('/albumSelection', methods=['GET', 'POST'])
 @flask_login.login_required
 def albumSelection():
+	
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	fullName = getFullNameFromUserID(uid)
 	if request.method == 'GET':
@@ -761,8 +771,37 @@ def search_tag():
 
 @app.route("/topUsers", methods=['GET'])
 def topUsers():
+	
 	return render_template('topUsers.html', users = getTopContributors())
 
+@app.route("/youMayAlsoLike", methods=['GET'])
+@flask_login.login_required
+def youMayAlsoLike():
+
+	dict = {}
+
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	for tag in mostFrequentlyUsedTags(uid):
+
+		for photo in getAllPhotos():
+			if checkIfHasTag(tag, photo[0]):
+				if(photo in dict):
+					dict[photo] = dict.get(photo) + 1
+				else:
+					dict[photo] = 1
+	threeTags = list()
+	twoTags = list()
+	oneTag = list()
+	for x in dict:
+		if(dict.get(x) == 3):
+			threeTags.append(x)
+		elif(dict.get(x) == 2):
+			twoTags.append(x)
+		elif(dict.get(x) == 1):
+			oneTag.append(x)
+		
+	allPhotosList = threeTags + twoTags + oneTag
+	return render_template('youMayAlsoLike.html', photos = allPhotosList,  base64=base64)
 
 #default page
 @app.route("/", methods=['GET'])
